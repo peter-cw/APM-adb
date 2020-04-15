@@ -71,9 +71,9 @@ class CfUtils():
 
 
 
-cur_path = pathutils.get_parent_path()
-cf = CfUtils(cur_path+'/conf.ini')
-cf.remove_option('test_sec','test_op1')
+# cur_path = pathutils.get_parent_path()
+# cf = CfUtils(cur_path+'/conf.ini')
+# cf.remove_option('test_sec','test_op1')
 # cf.set('test_sec','test_op1','1234')
 # cf.set('test_sec','test_op2','abc')
 # cf.write()

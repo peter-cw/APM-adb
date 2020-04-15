@@ -1,4 +1,7 @@
 import os
+import sys
+import platform
+
 class pathutils():
     @staticmethod
     def get_current_path():
@@ -38,3 +41,22 @@ class pathutils():
         path = os.path.abspath(os.path.join(os.getcwd(), "../.."))
         print(path)
         return path
+
+    @staticmethod
+    def get_grep():
+        grep_str = None
+        cur_platform = platform.platform()
+        if 'Windows' in cur_platform:
+            grep_str = 'findStr'
+        elif 'Linux' in cur_platform:
+            grep_str = 'grep'
+        else:
+            pass
+        print('current platform:{}'.format(cur_platform))
+        return grep_str
+
+# p1 = platform.platform()
+# print(p1)
+# platform = sys.platform
+# print(platform)
+print(pathutils.get_grep())
