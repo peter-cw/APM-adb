@@ -7,19 +7,19 @@ import os
 from utils.decorators.keyword import  keyword
 
 
-class adbutils(object):
+class adbutils():
     global ANDROID_SDK
     cur_path = pathutils.get_parent_path()
     cf = CfUtils(cur_path + '/conf.ini')
-    ANDROID_SDK = cf.get('project_conf','android_sdk_home')
+    ANDROID_SDK = cf.get('project_conf','android_sdk')
     global ADB_PATH
     ADB_PATH  = ANDROID_SDK+os.path.sep+'platform-tools'+os.path.sep+'adb.exe'
     global device
     device = cf.get('project_conf','cur_device')
     global output
     output = None
-    global logger
-    cur_logger = None
+    # global logger
+    # cur_logger = None
 
     def __init__(self,out,logger):
         # global output
@@ -29,22 +29,53 @@ class adbutils(object):
 
     # @classmethod
     @keyword
-    def exec_shell(self,cmd:str,shell=True,sn=None):
+    def exec_shell(self,cmd:str,sn=None):
+        '''
 
+        :param cmd:  shell command,for examle: cmd = 'dumpsys cpuinfo'
+        :param sn: sn of test android smartphone
+        :return:
+        '''
         cmd_str = ADB_PATH
         if sn:
             cmd_str += ' -s ' + sn+' '
-        if shell:
-            cmd_str += ' shell '
-        cmd_str +=  ' '+cmd
+
+        cmd_str += ' shell '
+        cmd_str +=  ' \"{}\"'.format(cmd)
         print(cmd_str)
         # subprocess.check_call()
         try:
             res = subprocess.check_output(cmd_str,stderr=subprocess.PIPE,shell=False)
+            self.cur_logger.info('execute cmd:%r  successfully,return: %r'%(cmd_str,res))
+
             return res
 
 
+
+        except subprocess.CalledProcessError as exc:
+            self.cur_logger.error('returncode:%r'%exc.returncode)
+            self.cur_logger.error('cmd:%r'% exc.cmd)
+            self.cur_logger.error('output:%r'% exc.output)
+
+    @keyword
+    def exec_cmd(self, cmd: str, sn = None):
+        '''
+
+        :param cmd: adb command (not shell command),for example cmd = 'logcat -v time'
+        :param sn: sn of test android smartphone
+        :return:
+        '''
+        cmd_str = ADB_PATH+' '
+        if sn:
+            cmd_str += ' -s ' + sn+' '
+
+        cmd_str += cmd
+        try:
+            res = subprocess.check_output(cmd_str,stderr=subprocess.PIPE,shell=False)
             self.cur_logger.info('execute cmd:%r  successfully,return: %r'%(cmd_str,res))
+            return res
+
+
 
         except subprocess.CalledProcessError as exc:
             self.cur_logger.error('returncode:%r'%exc.returncode)
@@ -56,7 +87,7 @@ class adbutils(object):
     @keyword
     def get_devices(self):
         cmd = 'devices'
-        res_encode = self.exec_shell(cmd=cmd,shell=False)
+        res_encode = self.exec_cmd(cmd=cmd)
         # res_encode = res_encode.rstrip()
         # print('去除首尾空白字符',res_encode)
         res_decode = res_encode.decode('utf-8')
@@ -71,66 +102,9 @@ class adbutils(object):
         return device_list
 
 
-    # @classmethod
-    @keyword
-    def get_meminfo(self,sn,pkg):
-        '''在命令行中可以执行，在代码中执行报错
-        cmd:   adb -s 2GX0119327000343  shell  dumpsys meminfo com.huawei.hwid|findStr TOTAL
-        '''
-        # cmd = 'dumpsys meminfo '+pkg+'|'+pathutils.get_grep()+' TOTAL '
-        '''安卓使用linux内核，故使用grep，但grep在windows平台不被识别，以字符串形式拼接'''
-        cmd = '\"dumpsys meminfo '+pkg+'|grep TOTAL\" '
 
-        res = self.exec_shell(cmd=cmd,shell=True,sn=sn)
-        return res.decode('utf-8')
 
-    @keyword
-    def get_cpuinfo(self,sn,pkg):
-        '''在命令行中可以执行，在代码中执行报错
-        cmd:   adb -s 2GX0119327000343  shell  dumpsys meminfo com.huawei.hwid|findStr TOTAL
-        '''
-        # cmd = 'dumpsys meminfo '+pkg+'|'+pathutils.get_grep()+' TOTAL '
-        '''安卓使用linux内核，故使用grep，但grep在windows平台不被识别，以字符串形式拼接'''
-        cmd = '\"dumpsys meminfo '+pkg+'|grep TOTAL\" '
 
-        res = self.exec_shell(cmd=cmd,shell=True,sn=sn)
-        return res.decode('utf-8')
-
-    @keyword
-    def get_uid(self,sn,pkg):
-        '''在命令行中可以执行，在代码中执行报错
-        cmd:   adb -s 2GX0119327000343  shell  dumpsys meminfo com.huawei.hwid|findStr TOTAL
-        '''
-        # cmd = 'ps  pkg+'+'|'+pathutils.get_grep()+' TOTAL '
-        '''安卓使用linux内核，故使用grep，但grep在windows平台不被识别，以字符串形式拼接'''
-        cmd = '\"ps |grep '+pkg+'\" '
-
-        res = self.exec_shell(cmd=cmd,shell=True,sn=sn)
-        return res.decode('utf-8')
-
-    @keyword
-    def start_activity(self,activity,sn=None):
-        '''在命令行中可以执行，在代码中执行报错
-        cmd:   adb -s 2GX0119327000343  shell  dumpsys meminfo com.huawei.hwid|findStr TOTAL
-        '''
-        # cmd = 'ps  pkg+'+'|'+pathutils.get_grep()+' TOTAL '
-        '''安卓使用linux内核，故使用grep，但grep在windows平台不被识别，以字符串形式拼接'''
-        cmd = '\"am  start -W '+activity+'\" '
-
-        res = self.exec_shell(cmd=cmd,shell=True,sn=sn)
-        return res.decode('utf-8')
-
-    @keyword
-    def stop_activity(self,pkg,sn=None):
-        '''在命令行中可以执行，在代码中执行报错
-        cmd:   adb -s 2GX0119327000343  shell  dumpsys meminfo com.huawei.hwid|findStr TOTAL
-        '''
-        # cmd = 'ps  pkg+'+'|'+pathutils.get_grep()+' TOTAL '
-        '''安卓使用linux内核，故使用grep，但grep在windows平台不被识别，以字符串形式拼接'''
-        cmd = '\"am  force-stop '+pkg+'\" '
-
-        res = self.exec_shell(cmd=cmd,shell=True,sn=sn)
-        return res.decode('utf-8')
 
 cmd = 'devices'
 logger = Logger('AdbUtils')
@@ -138,7 +112,14 @@ adb = adbutils(out=sys.stderr,logger=logger)
 # res = adbutils.exec_shell(cmd,shell=False)
 res = adb.get_devices()
 print(res)
-
+# res = adb.get_meminfo(sn=res[0],pkg='com.huawei.hwid')
+# print(res)
+# res = adb.get_cpuinfo(sn=res[0],pkg='com.huawei.hwid')
+# print(res)
+# res = adb.get_cpu_num(sn=res[0])
+print(res)
+print(os.sep)
+print(os.linesep)
 # print(res.decode('utf-8').split('\n')[1].split('\t')[0])
 
 
@@ -154,13 +135,3 @@ print(res)
 #             print(men)
 #             return men
 
-gamebox_box = 'com.huawei.gamebox/com.huawei.gamebox.GameBoxActivity'
-adb.exec_shell(cmd='pm clear com.huawei.gamebox',shell=True,sn=None)
-res = adb.start_activity(activity=gamebox_box)
-print('首次启动',res)
-adb.exec_shell(cmd='input keyevent KEYCODE_HOME',shell=True,sn=None)
-res = adb.start_activity(activity=gamebox_box)
-print('热启动',res)
-res = adb.stop_activity(pkg='com.huawei.gamebox')
-res = adb.start_activity(activity=gamebox_box)
-print('冷启动',res)
